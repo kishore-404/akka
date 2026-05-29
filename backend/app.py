@@ -9,6 +9,11 @@ from datetime import datetime, date, timedelta
 import pandas as pd
 import zipfile
 import os
+from flask import Flask
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app) # This allows React to talk to Flask
 from dotenv import load_dotenv
 load_dotenv()
 
