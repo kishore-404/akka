@@ -9,7 +9,7 @@ print("CHECKING USERS AND DECKS")
 print("=" * 60)
 
 with app.app_context():
-    users = User.query.filter(User.username != 'Joseph Mercy Buela', User.username != 'admin').all()
+    users = User.query.filter(User.username != 'Buela', User.username != 'admin').all()
     
     for user in users:
         deck_count = Deck.query.filter_by(user_id=user.id).count()

@@ -3,9 +3,9 @@ from models import User
 from werkzeug.security import generate_password_hash
 
 with app.app_context():
-    YOUR_NAME = "Joseph Mercy Buela"
+    YOUR_NAME = "Kishore"
     YOUR_PASSWORD = "9840038816"
-    YOUR_EMAIL = "srbuelajesu@gmail.com"
+    YOUR_EMAIL = "kishores.developer@gmail.com"
     
     # Delete if already exists
     User.query.filter_by(username=YOUR_NAME).delete()

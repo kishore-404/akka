@@ -9,10 +9,13 @@ class User(db.Model, UserMixin):
     __tablename__ = "users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     total_points = db.Column(db.Integer, default=0)
     total_studied = db.Column(db.Integer, default=0)
+    otp_code = db.Column(db.String(6), nullable=True)
+    otp_expiry = db.Column(db.DateTime, nullable=True)
     streak = db.Column(db.Integer, default=0)
     last_study_date = db.Column(db.String(20))
     unlocked_decks = db.Column(db.Integer, default=999)

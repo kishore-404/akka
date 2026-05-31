@@ -4,11 +4,11 @@ from werkzeug.security import generate_password_hash
 
 with app.app_context():
     # Delete existing user if exists
-    User.query.filter_by(username='Joseph Mercy Buela').delete()
+    User.query.filter_by(username='Buela').delete()
     
     # Create new admin user
     admin = User(
-        username='Joseph Mercy Buela',
+        username='Buela',
         email='admin@college.edu',
         password=generate_password_hash('9840038816'),
         total_points=0,
@@ -22,6 +22,6 @@ with app.app_context():
     print("=" * 50)
     print("Admin user created successfully!")
     print("=" * 50)
-    print("Username: Joseph Mercy Buela")
+    print("Username: Buela")
     print("Password: 9840038816")
     print("=" * 50)

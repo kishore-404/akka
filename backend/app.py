@@ -11,7 +11,12 @@ import zipfile
 import os
 from flask import Flask
 from flask_cors import CORS
+from flask import jsonify
+from datetime import datetime, timedelta
+from sqlalchemy import func
 
+from quiz import register_quiz_routes
+from admin_routes import register_admin_routes
 app = Flask(__name__)
 CORS(app) # This allows React to talk to Flask
 from dotenv import load_dotenv
@@ -39,7 +44,8 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    
+    return db.session.get(User, int(user_id))
 
 # Initialize Groq client
 groq_client = None
@@ -140,16 +146,38 @@ from study import register_study_routes
 from quiz import register_quiz_routes
 from research import register_research_routes
 from learning import register_learning_routes
+from flask import Flask
+from flask_mail import Mail
+from dotenv import load_dotenv
+
+
+
+# Initialize Mail
+
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS') == 'True'
+app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+mail = Mail(app)
 
 # ============================================================
 # REGISTER ALL ROUTES
 # ============================================================
-register_auth_routes(app)
+register_auth_routes(app,mail)
 register_decks_routes(app)
 register_study_routes(app)
 register_quiz_routes(app)
 register_research_routes(app)
 register_learning_routes(app)
+register_admin_routes(app)
+
+
+
+
 
 # ============================================================
 # HOME ROUTE
@@ -161,83 +189,80 @@ def home():
 # ============================================================
 # DASHBOARD ROUTE (For Students Only)
 # ============================================================
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET'])
 @login_required
 def dashboard():
-    # Redirect admin to admin dashboard
-    if current_user.username == 'Joseph Mercy Buela' or current_user.username == 'admin':
-        return redirect(url_for('admin_dashboard'))
-    
+    # 1. Fetch decks and calculate totals using your exact existing logic
     decks = Deck.query.filter_by(user_id=current_user.id).all()
     total_cards = sum(len(deck.cards) for deck in decks)
+    
     total_mastered = Card.query.join(Deck).filter(
         Deck.user_id == current_user.id, 
         Card.is_mastered == True
     ).count()
     
+    # 2. Update stars logic (identical to your original code)
     if current_user.total_points:
         new_stars = current_user.total_points // 100
         if new_stars != current_user.stars:
             current_user.stars = new_stars
             db.session.commit()
-    
-    return render_template('dashboard.html', 
-                         decks=decks, 
-                         total_cards=total_cards,
-                         total_mastered=total_mastered,
-                         user=current_user)
+            
+    # 3. Return the data as JSON for React instead of an HTML template
+    return jsonify({
+        "user": {
+            "username": current_user.username,
+            "stars": current_user.stars or 0,
+            "total_points": current_user.total_points or 0,
+            "streak": getattr(current_user, 'streak', 0) # Safe fallback if streak isn't in DB
+        },
+        "total_mastered": total_mastered,
+        "total_cards": total_cards,
+        "decks": [
+            {
+                "id": deck.id, 
+                "name": deck.name, 
+                "subject": getattr(deck, 'subject', 'General'),
+                "count": len(deck.cards) # React needs to know how many cards are in the deck
+            } 
+            for deck in decks
+        ]
+    }), 200
 
 # ============================================================
 # PROGRESS TRACKING ROUTE
 # ============================================================
-@app.route('/progress')
+@app.route('/progress_data', methods=['GET'])
 @login_required
-def progress():
-    # Redirect admin to admin dashboard
-    if current_user.username == 'Joseph Mercy Buela' or current_user.username == 'admin':
-        return redirect(url_for('admin_dashboard'))
+def api_progress_data():
+    if current_user.username in ['Buela', 'admin', 'Kishore'] or getattr(current_user, 'is_admin', False):
+        return jsonify({'redirect': '/admin_dashboard'}), 200
     
     today = date.today()
     
     # 1. Weekly Progress Data (Last 4 weeks)
-    weekly_labels = []
     weekly_data = []
-    
     for i in range(3, -1, -1):
         week_start = today - timedelta(days=i*7 + 7)
         week_end = today - timedelta(days=i*7)
-        week_label = f"Week {4-i}"
         
-        mastered_in_week = Card.query.join(Deck).filter(
+        mastered = Card.query.join(Deck).filter(
             Deck.user_id == current_user.id,
             Card.is_mastered == True,
             Card.last_review >= week_start,
             Card.last_review <= week_end
         ).count()
         
-        weekly_labels.append(week_label)
-        weekly_data.append(mastered_in_week)
+        weekly_data.append({"name": f"Week {4-i}", "mastered": mastered})
     
-    # 2. FSRS vs SM-2 Mastery Counts
-    fsrs_mastered = Card.query.join(Deck).filter(
-        Deck.user_id == current_user.id,
-        Card.algorithm == 'FSRS',
-        Card.is_mastered == True
-    ).count()
-    
-    sm2_mastered = Card.query.join(Deck).filter(
-        Deck.user_id == current_user.id,
-        Card.algorithm == 'SM2',
-        Card.is_mastered == True
-    ).count()
+    # 2. Mastery Counts
+    fsrs_mastered = Card.query.join(Deck).filter(Deck.user_id == current_user.id, Card.algorithm == 'FSRS', Card.is_mastered == True).count()
+    sm2_mastered = Card.query.join(Deck).filter(Deck.user_id == current_user.id, Card.algorithm.in_(['SM2', 'SM-2']), Card.is_mastered == True).count()
     
     # 3. Daily Activity (Last 7 days)
-    daily_labels = []
     daily_data = []
-    
     for i in range(6, -1, -1):
         day = today - timedelta(days=i)
-        day_label = day.strftime('%a')
         
         cards_studied = CardReview.query.join(Card).join(Deck).filter(
             Deck.user_id == current_user.id,
@@ -245,82 +270,131 @@ def progress():
             CardReview.created_at <= datetime.combine(day, datetime.max.time())
         ).count()
         
-        daily_labels.append(day_label)
-        daily_data.append(cards_studied)
+        daily_data.append({"name": day.strftime('%a'), "studied": cards_studied})
     
-    # 4. Retention Rate Trend (Last 4 weeks by algorithm)
-    retention_labels = []
-    fsrs_retention_data = []
-    sm2_retention_data = []
-    
+    # 4. Retention Rate Trend
+    retention_data = []
     for i in range(3, -1, -1):
         week_start = today - timedelta(days=i*7 + 7)
         week_end = today - timedelta(days=i*7)
-        week_label = f"Week {4-i}"
         
-        # FSRS retention for this week
-        fsrs_reviews = CardReview.query.join(Card).join(Deck).filter(
-            Deck.user_id == current_user.id,
-            Card.algorithm == 'FSRS',
-            CardReview.created_at >= week_start,
-            CardReview.created_at <= week_end
+        fsrs_revs = CardReview.query.join(Card).join(Deck).filter(
+            Deck.user_id == current_user.id, Card.algorithm == 'FSRS',
+            CardReview.created_at >= week_start, CardReview.created_at <= week_end
         ).all()
+        fsrs_ret = round((sum(1 for r in fsrs_revs if r.rating >= 3) / len(fsrs_revs)) * 100, 1) if fsrs_revs else 0
         
-        if fsrs_reviews:
-            fsrs_correct = sum(1 for r in fsrs_reviews if r.rating >= 3)
-            fsrs_retention = round((fsrs_correct / len(fsrs_reviews)) * 100, 1)
-        else:
-            fsrs_retention = 0
-        
-        # SM-2 retention for this week
-        sm2_reviews = CardReview.query.join(Card).join(Deck).filter(
-            Deck.user_id == current_user.id,
-            Card.algorithm == 'SM2',
-            CardReview.created_at >= week_start,
-            CardReview.created_at <= week_end
+        sm2_revs = CardReview.query.join(Card).join(Deck).filter(
+            Deck.user_id == current_user.id, Card.algorithm.in_(['SM2', 'SM-2']),
+            CardReview.created_at >= week_start, CardReview.created_at <= week_end
         ).all()
+        sm2_ret = round((sum(1 for r in sm2_revs if r.rating >= 3) / len(sm2_revs)) * 100, 1) if sm2_revs else 0
         
-        if sm2_reviews:
-            sm2_correct = sum(1 for r in sm2_reviews if r.rating >= 3)
-            sm2_retention = round((sm2_correct / len(sm2_reviews)) * 100, 1)
-        else:
-            sm2_retention = 0
-        
-        retention_labels.append(week_label)
-        fsrs_retention_data.append(fsrs_retention)
-        sm2_retention_data.append(sm2_retention)
+        retention_data.append({"name": f"Week {4-i}", "FSRS": fsrs_ret, "SM2": sm2_ret})
     
-    # 5. Calculate total studied this week
+    # 5. Totals
     week_ago = today - timedelta(days=7)
     total_studied_week = CardReview.query.join(Card).join(Deck).filter(
-        Deck.user_id == current_user.id,
-        CardReview.created_at >= week_ago
+        Deck.user_id == current_user.id, CardReview.created_at >= week_ago
     ).count()
     
-    # 6. Average retention rate
-    all_reviews = CardReview.query.join(Card).join(Deck).filter(
-        Deck.user_id == current_user.id
-    ).all()
+    all_reviews = CardReview.query.join(Card).join(Deck).filter(Deck.user_id == current_user.id).all()
+    avg_retention = round((sum(1 for r in all_reviews if r.rating >= 3) / len(all_reviews)) * 100, 1) if all_reviews else 0
     
-    if all_reviews:
-        correct = sum(1 for r in all_reviews if r.rating >= 3)
-        avg_retention = round((correct / len(all_reviews)) * 100, 1)
-    else:
-        avg_retention = 0
-    
-    return render_template('progress.html',
-                         weekly_labels=weekly_labels,
-                         weekly_data=weekly_data,
-                         fsrs_mastered=fsrs_mastered,
-                         sm2_mastered=sm2_mastered,
-                         daily_labels=daily_labels,
-                         daily_data=daily_data,
-                         retention_labels=retention_labels,
-                         fsrs_retention_data=fsrs_retention_data,
-                         sm2_retention_data=sm2_retention_data,
-                         total_studied_week=total_studied_week,
-                         avg_retention=avg_retention)
+    return jsonify({
+        "weekly_data": weekly_data,
+        "daily_data": daily_data,
+        "retention_data": retention_data,
+        "fsrs_mastered": fsrs_mastered,
+        "sm2_mastered": sm2_mastered,
+        "total_studied_week": total_studied_week,
+        "avg_retention": avg_retention
+    }), 200
 
+# Visual the progress data as JSON for React to consume in the Progress.jsx page
+
+@app.route('/progress_data', methods=['GET'])
+@login_required
+def progress_data():
+    try:
+        # 1. Summary Statistics
+        fsrs_mastered = Card.query.join(Deck).filter(
+            Deck.user_id == current_user.id,
+            Card.is_mastered == True,
+            Card.algorithm == 'FSRS' 
+        ).count()
+
+        # Notice we check for 'SM2' based on your model's default value
+        sm2_mastered = Card.query.join(Deck).filter(
+            Deck.user_id == current_user.id,
+            Card.is_mastered == True,
+            Card.algorithm.in_(['SM2', 'SM-2']) 
+        ).count()
+        
+        # Calculate cards studied in the last 7 days using the correct column name
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        total_studied_week = Card.query.join(Deck).filter(
+            Deck.user_id == current_user.id,
+            Card.last_review >= seven_days_ago # Fixed: last_review
+        ).count()
+
+        # Calculate accurate retention using your CardReview table! (Rating 3 or 4 = Correct)
+        total_reviews = CardReview.query.filter_by(user_id=current_user.id).count()
+        if total_reviews > 0:
+            correct_reviews = CardReview.query.filter(
+                CardReview.user_id == current_user.id,
+                CardReview.rating >= 3
+            ).count()
+            avg_retention = round((correct_reviews / total_reviews) * 100)
+        else:
+            avg_retention = 0
+
+        # 2. Time-Series Data for Charts (Last 7 Days)
+        daily_labels = []
+        daily_data = []
+        
+        for i in range(6, -1, -1):
+            target_date = datetime.utcnow() - timedelta(days=i)
+            daily_labels.append(target_date.strftime('%a')) 
+            
+            day_start = target_date.replace(hour=0, minute=0, second=0)
+            day_end = target_date.replace(hour=23, minute=59, second=59)
+            
+            # Count how many reviews happened on this specific day
+            cards_that_day = CardReview.query.filter(
+                CardReview.user_id == current_user.id,
+                CardReview.created_at >= day_start,
+                CardReview.created_at <= day_end
+            ).count()
+            
+            daily_data.append(cards_that_day)
+
+        # 3. Return structured JSON
+        return jsonify({
+            "fsrs_mastered": fsrs_mastered,
+            "sm2_mastered": sm2_mastered,
+            "total_studied_week": total_studied_week,
+            "avg_retention": avg_retention,
+            
+            "daily_labels": daily_labels,
+            "daily_data": daily_data,
+            
+            # Placeholders for Weekly trends (Can be updated later with complex SQL GroupBys)
+            "weekly_labels": ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            "weekly_data": [0, 0, 0, fsrs_mastered + sm2_mastered], 
+            
+            "retention_labels": ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+            "fsrs_retention_data": [0, 0, 0, avg_retention],
+            "sm2_retention_data": [0, 0, 0, max(0, avg_retention - 5)] 
+        }), 200
+
+    except Exception as e:
+        print(f"Error generating progress data: {e}")
+        return jsonify({"error": "Failed to generate analytics"}), 500
+     
+     
+#Admin Routes
+     
 # ============================================================
 # EXPORT ROUTES
 # ============================================================
@@ -422,229 +496,6 @@ def export_excel():
     )
 
 # ============================================================
-# ADMIN RESEARCH ROUTES
-# ============================================================
-
-@app.route('/admin/dashboard')
-@login_required
-def admin_dashboard():
-    """Admin dashboard to view all students' data and activities"""
-    if current_user.username != 'admin' and current_user.username != 'Joseph Mercy Buela':
-        flash('Access denied! Admin only.', 'error')
-        return redirect(url_for('dashboard'))
-    
-    students = User.query.filter(User.username != 'admin', User.username != 'Joseph Mercy Buela').all()
-    students_data = []
-    total_cards_studied = 0
-    total_quizzes = 0
-    fsrs_wins = 0
-    sm2_wins = 0
-    total_retention_improvement = 0
-    recent_activities = []
-    
-    for student in students:
-        # Get cards
-        fsrs_cards = Card.query.join(Deck).filter(
-            Deck.user_id == student.id,
-            Card.algorithm == 'FSRS'
-        ).all()
-        
-        sm2_cards = Card.query.join(Deck).filter(
-            Deck.user_id == student.id,
-            Card.algorithm == 'SM2'
-        ).all()
-        
-        # Get reviews
-        fsrs_reviews = CardReview.query.join(Card).join(Deck).filter(
-            Deck.user_id == student.id,
-            Card.algorithm == 'FSRS'
-        ).all()
-        
-        sm2_reviews = CardReview.query.join(Card).join(Deck).filter(
-            Deck.user_id == student.id,
-            Card.algorithm == 'SM2'
-        ).all()
-        
-        # Calculate metrics
-        fsrs_correct = sum(1 for r in fsrs_reviews if r.rating >= 3)
-        fsrs_retention = round((fsrs_correct / len(fsrs_reviews) * 100), 1) if fsrs_reviews else 0
-        
-        sm2_correct = sum(1 for r in sm2_reviews if r.rating >= 3)
-        sm2_retention = round((sm2_correct / len(sm2_reviews) * 100), 1) if sm2_reviews else 0
-        
-        # Quiz count
-        quiz_count = QuizResult.query.filter_by(user_id=student.id).count()
-        
-        total_cards_studied += student.total_studied or 0
-        total_quizzes += quiz_count
-        
-        students_data.append({
-            'username': student.username,
-            'email': student.email,
-            'total_studied': student.total_studied or 0,
-            'total_points': student.total_points or 0,
-            'streak': student.streak or 0,
-            'quiz_count': quiz_count,
-            'fsrs_retention': fsrs_retention,
-            'sm2_retention': sm2_retention,
-            'fsrs_reviews': len(fsrs_reviews),
-            'sm2_reviews': len(sm2_reviews),
-        })
-        
-        if fsrs_retention > sm2_retention:
-            fsrs_wins += 1
-        elif sm2_retention > fsrs_retention:
-            sm2_wins += 1
-        
-        total_retention_improvement += (fsrs_retention - sm2_retention)
-        
-        # Get recent activities (last 5 reviews)
-        recent_reviews = CardReview.query.join(Card).join(Deck).filter(
-            Deck.user_id == student.id
-        ).order_by(CardReview.created_at.desc()).limit(5).all()
-        
-        for review in recent_reviews:
-            recent_activities.append({
-                'time': review.created_at.strftime('%Y-%m-%d %H:%M'),
-                'student': student.username,
-                'type': '📝 Card Review',
-                'details': f'Rated "{review.card.question[:50]}" as {review.rating_text} ({review.response_time:.1f}s)'
-            })
-        
-        # Get recent quizzes
-        recent_quizzes = QuizResult.query.filter_by(user_id=student.id).order_by(QuizResult.created_at.desc()).limit(3).all()
-        for quiz in recent_quizzes:
-            recent_activities.append({
-                'time': quiz.created_at.strftime('%Y-%m-%d %H:%M'),
-                'student': student.username,
-                'type': '📝 Quiz Completed',
-                'details': f'Score: {quiz.score}/{quiz.total_questions} ({quiz.percentage:.0f}%)'
-            })
-    
-    # Sort activities by time (most recent first)
-    recent_activities.sort(key=lambda x: x['time'], reverse=True)
-    recent_activities = recent_activities[:20]  # Show last 20 activities
-    
-    total_students = len(students)
-    avg_retention = round(sum(s['fsrs_retention'] for s in students_data) / total_students, 1) if total_students > 0 else 0
-    avg_retention_improvement = round(total_retention_improvement / total_students, 1) if total_students > 0 else 0
-    
-    return render_template('admin_dashboard.html',
-                         students=students_data,
-                         total_students=total_students,
-                         total_cards_studied=total_cards_studied,
-                         total_quizzes=total_quizzes,
-                         avg_retention=avg_retention,
-                         fsrs_wins=fsrs_wins,
-                         sm2_wins=sm2_wins,
-                         avg_retention_improvement=avg_retention_improvement,
-                         recent_activities=recent_activities)
-
-@app.route('/admin/export_all')
-@login_required
-def admin_export_all():
-    """Export ALL students' data as ZIP for research"""
-    if current_user.username != 'admin' and current_user.username != 'Joseph Mercy Buela':
-        flash('Access denied! Admin only.', 'error')
-        return redirect(url_for('dashboard'))
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_buffer = BytesIO()
-    
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        all_students = []
-        users = User.query.filter(User.username != 'admin', User.username != 'Joseph Mercy Buela').all()
-        
-        for user in users:
-            fsrs_cards = Card.query.join(Deck).filter(
-                Deck.user_id == user.id,
-                Card.algorithm == 'FSRS'
-            ).all()
-            
-            sm2_cards = Card.query.join(Deck).filter(
-                Deck.user_id == user.id,
-                Card.algorithm == 'SM2'
-            ).all()
-            
-            fsrs_reviews = CardReview.query.join(Card).join(Deck).filter(
-                Deck.user_id == user.id,
-                Card.algorithm == 'FSRS'
-            ).all()
-            
-            sm2_reviews = CardReview.query.join(Card).join(Deck).filter(
-                Deck.user_id == user.id,
-                Card.algorithm == 'SM2'
-            ).all()
-            
-            fsrs_correct = sum(1 for r in fsrs_reviews if r.rating >= 3)
-            fsrs_retention = round((fsrs_correct / len(fsrs_reviews) * 100), 1) if fsrs_reviews else 0
-            
-            sm2_correct = sum(1 for r in sm2_reviews if r.rating >= 3)
-            sm2_retention = round((sm2_correct / len(sm2_reviews) * 100), 1) if sm2_reviews else 0
-            
-            all_students.append({
-                'Student ID': user.id,
-                'Username': user.username,
-                'Email': user.email,
-                'Total Cards Studied': user.total_studied,
-                'Total Points': user.total_points,
-                'Streak': user.streak,
-                'FSRS Retention (%)': fsrs_retention,
-                'SM2 Retention (%)': sm2_retention,
-                'FSRS Cards': len(fsrs_cards),
-                'SM2 Cards': len(sm2_cards),
-                'FSRS Reviews': len(fsrs_reviews),
-                'SM2 Reviews': len(sm2_reviews),
-            })
-        
-        if all_students:
-            keys = all_students[0].keys()
-            master_csv = ','.join(keys) + '\n'
-            for student in all_students:
-                master_csv += ','.join(str(student[k]) for k in keys) + '\n'
-            zip_file.writestr(f'all_students_data_{timestamp}.csv', master_csv)
-    
-    zip_buffer.seek(0)
-    
-    return send_file(
-        zip_buffer,
-        mimetype='application/zip',
-        as_attachment=True,
-        download_name=f'research_data_all_students_{timestamp}.zip'
-    )
-
-# ============================================================
-# ADMIN RESET ROUTE
-# ============================================================
-@app.route('/admin/reset')
-@login_required
-def admin_reset():
-    decks = Deck.query.filter_by(user_id=current_user.id).all()
-    for deck in decks:
-        for card in deck.cards:
-            card.review_count = 0
-            card.avg_time = 0
-            card.is_mastered = False
-            card.last_review = None
-            card.next_review = None
-            if card.algorithm == 'FSRS':
-                card.stability = 2.0
-                card.difficulty = 5.0
-            else:
-                card.e_factor = 2.5
-                card.interval = 1
-    
-    current_user.total_studied = 0
-    current_user.total_points = 0
-    current_user.stars = 0
-    current_user.streak = 0
-    current_user.last_study_date = None
-    db.session.commit()
-    
-    flash('✅ All your progress has been reset! You can start fresh.', 'success')
-    return redirect(url_for('admin_dashboard' if (current_user.username == 'admin' or current_user.username == 'Joseph Mercy Buela') else 'dashboard'))
-
-# ============================================================
 # CHATBOT ROUTE — Groq AI Python Tutor
 # ============================================================
 
@@ -696,6 +547,7 @@ def chat():
         else:
             return jsonify({'error': f'Chatbot error: {error_msg}'}), 500
 
+
 # ============================================================
 # MAIN ENTRY POINT
 # ============================================================
@@ -721,7 +573,7 @@ if __name__ == '__main__':
     print('\n👉 http://127.0.0.1:5000')
     print('📚 Demo Login: student')
     print('🔑 Password: study123')
-    print('👑 Admin Login: Joseph Mercy Buela')
+    print('👑 Admin Login: Buela')
     print('🔑 Admin Password: 9840038816')
     print('='*60 + '\n')
     app.run(debug=True, host='127.0.0.1', port=5000)

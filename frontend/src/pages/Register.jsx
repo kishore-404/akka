@@ -40,42 +40,39 @@ const Register = () => {
       return;
     }
 
-    // 2. Network Request via Vite Proxy
+    // 2. Network Request via Vite Proxy (UPDATED TO JSON)
     try {
-      const formData = new URLSearchParams();
-      formData.append('username', username);
-      formData.append('email', email);
-      formData.append('password', password);
-      formData.append('confirm_password', confirmPassword);
-
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json', // 🌟 Changed to JSON
         },
-        body: formData.toString(),
-        redirect: 'manual', 
+        // 🌟 Send as a JSON string
+        body: JSON.stringify({ 
+          username: username, 
+          email: email, 
+          password: password, 
+          confirm_password: confirmPassword 
+        }),
       });
 
-      // Assuming Flask redirects to /login or /dashboard after successful registration
-      if (response.type === 'opaqueredirect' || response.status === 302) {
-        setStatus({ type: 'success', message: 'Account created successfully. Redirecting...' });
-        setTimeout(() => navigate('/login'), 1500); 
-      } 
-      else if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok) {
          setStatus({ type: 'success', message: 'Account created successfully. Redirecting...' });
-         setTimeout(() => navigate('/login'), 1500); 
+         // Use the redirect path provided by the backend (Admin vs Student)
+         setTimeout(() => navigate(data.redirect || '/dashboard'), 1500); 
       }
       else {
-        // If Flask returns a 400 series error (e.g., username taken)
+        // If Flask returns a 400 or 409 series error (e.g., username taken)
         setStatus({ 
           type: 'error', 
-          message: 'Registration failed. Username or email may already be in use.' 
+          message: data.error || 'Registration failed. Username or email may already be in use.' 
         });
       }
     } catch (error) {
       console.error("Registration Error:", error);
-      setStatus({ type: 'error', message: 'Secure connection failed. Please check your network.' });
+      setStatus({ type: 'error', message: 'Secure connection failed. Please check your network or ensure the server is running.' });
     } finally {
       setIsLoading(false);
     }
