@@ -42,7 +42,7 @@ const Register = () => {
 
     // 2. Network Request via Vite Proxy (UPDATED TO JSON)
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/register', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/api/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json', // 🌟 Changed to JSON

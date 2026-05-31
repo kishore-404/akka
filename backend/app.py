@@ -151,6 +151,10 @@ from flask_mail import Mail
 from dotenv import load_dotenv
 
 
+CORS(app, origins=[
+    "http://localhost:3000",
+    "http://localhost:5173"
+])
 
 # Initialize Mail
 
