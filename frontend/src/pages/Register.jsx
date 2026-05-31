@@ -4,6 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import Logo from '../../public/auxlogo.jpg';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -92,7 +93,7 @@ const Register = () => {
         <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-start gap-4 sm:gap-6 text-center lg:text-left w-full max-w-2xl lg:max-w-none">
           <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center p-2 shadow-lg">
              <img 
-               src="/static/auxlogo.jpg" 
+               src={Logo} 
                alt="Auxilium College Logo" 
                className="w-full h-full object-contain"
                onError={(e) => {
