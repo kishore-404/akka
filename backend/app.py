@@ -18,6 +18,8 @@ from sqlalchemy import func
 from quiz import register_quiz_routes
 from admin_routes import register_admin_routes
 app = Flask(__name__)
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
 CORS(app) # This allows React to talk to Flask
 from dotenv import load_dotenv
 load_dotenv()

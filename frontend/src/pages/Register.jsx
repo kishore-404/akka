@@ -45,6 +45,7 @@ const Register = () => {
     try {
       const response = await fetch('https://kishoredev.pythonanywhere.com/register', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json', // 🌟 Changed to JSON
         },

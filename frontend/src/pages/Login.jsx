@@ -36,6 +36,7 @@ const Login = () => {
     try {
       const response = await fetch('https://kishoredev.pythonanywhere.com/login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
