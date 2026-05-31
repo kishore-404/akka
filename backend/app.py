@@ -195,6 +195,15 @@ def home():
     return {
         "status": "API running"
     }
+    
+    login_manager = LoginManager()
+login_manager.init_app(app)
+
+# 👉 ADD THESE EXACT 3 LINES RIGHT HERE IN APP.PY 👈
+@login_manager.unauthorized_handler
+def unauthorized():
+    return jsonify({"error": "Unauthorized. Please log in."}), 401
+
 # ============================================================
 # DASHBOARD ROUTE (For Students Only)
 # ============================================================
@@ -238,11 +247,7 @@ def dashboard():
         ]
     }), 200
 
-@login_manager.unauthorized_handler
-def unauthorized():
-    # Stop Flask from looking for a 'login' endpoint to redirect to.
-    # Instead, return a clean JSON error for React.
-    return jsonify({"error": "Unauthorized. Please log in."}), 401
+
 # ============================================================
 # PROGRESS TRACKING ROUTE
 # ============================================================
