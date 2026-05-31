@@ -184,8 +184,9 @@ register_admin_routes(app)
 # ============================================================
 @app.route('/')
 def home():
-    return redirect(url_for('login'))
-
+    return {
+        "status": "API running"
+    }
 # ============================================================
 # DASHBOARD ROUTE (For Students Only)
 # ============================================================
