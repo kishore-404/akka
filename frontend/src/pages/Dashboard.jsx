@@ -182,6 +182,7 @@ const Dashboard = () => {
       // Calls your Vite proxy -> routes to Flask's dashboard data endpoint
       const response = await fetch('https://kishoredev.pythonanywhere.com/dashboard', {
         method: 'GET',
+        credentials: 'include',
         headers: { 'Accept': 'application/json' },
         credentials: 'include' 
       });

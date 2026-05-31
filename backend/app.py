@@ -17,9 +17,6 @@ from sqlalchemy import func
 
 from quiz import register_quiz_routes
 from admin_routes import register_admin_routes
-app = Flask(__name__)
-app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-app.config['SESSION_COOKIE_SECURE'] = True # This allows React to talk to Flask
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -34,6 +31,9 @@ except ImportError:
 # Initialize Flask app
 app = Flask(__name__, template_folder='../frontend/templates', static_folder='static')
 app.config.from_object(Config)
+
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
 
 # Initialize database
 db.init_app(app)
