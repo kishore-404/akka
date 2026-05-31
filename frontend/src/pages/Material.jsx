@@ -25,7 +25,7 @@ const LearningMaterial = () => {
   const fetchMaterials = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/materials_data', { credentials: 'include' });
+      const response = await fetch('https://kishoredev.pythonanywhere.com/materials_data', { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to load materials');
       
       const data = await response.json();
@@ -52,7 +52,7 @@ const LearningMaterial = () => {
       formData.append('name', newDeckName);
       formData.append('subject', newDeckSubject || 'General');
 
-      const response = await fetch('/api/create_deck', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/create_deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
@@ -78,7 +78,7 @@ const LearningMaterial = () => {
     if (!window.confirm("Delete this deck? All cards inside will be lost forever.")) return;
     
     try {
-      const response = await fetch(`/api/delete_deck/${deckId}`, { 
+      const response = await fetch(`https://kishoredev.pythonanywhere.com/delete_deck/${deckId}`, { 
         method: 'DELETE', 
         credentials: 'include' 
       });

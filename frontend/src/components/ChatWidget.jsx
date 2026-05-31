@@ -239,7 +239,7 @@ const ChatWidget = () => {
     setHistory(newHistory);
 
     try {
-      const response = await fetch('/api/chat', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -34,7 +34,7 @@ const Login = () => {
     const password = form.password.value;
 
     try {
-      const response = await fetch('/api/login', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -72,7 +72,7 @@ const Login = () => {
     setStatus({ type: null, message: '' });
 
     try {
-      const response = await fetch('/api/verify_otp', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/verify_otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: savedUsername, otp: otp }),

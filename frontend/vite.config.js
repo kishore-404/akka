@@ -13,7 +13,7 @@ export default defineConfig({
         target: 'http://127.0.0.1:5000',
         changeOrigin: true,
         // This removes the '/api' prefix before sending it to Flask
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\https://kishoredev.pythonanywhere.com/, '')
       }
     }
   }

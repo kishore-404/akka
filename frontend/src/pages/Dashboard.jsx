@@ -53,7 +53,7 @@ const CreateDeckModal = ({ isOpen, onClose, onDeckCreated }) => {
       formData.append('name', name);
       formData.append('subject', subject);
 
-      const response = await fetch('/api/create_deck', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/create_deck', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
@@ -180,7 +180,7 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
       // Calls your Vite proxy -> routes to Flask's dashboard data endpoint
-      const response = await fetch('/api/dashboard', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/dashboard', {
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         credentials: 'include' 

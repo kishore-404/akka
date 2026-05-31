@@ -32,7 +32,7 @@ const QuizTake = () => {
       if (!quizData) setIsLoading(true); 
       
       // 🌟 FIXED: Removed /api prefix
-      const response = await fetch(`/api/quiz/take_data?_t=${Date.now()}`, { 
+      const response = await fetch(`https://kishoredev.pythonanywhere.com/quiz/take_data?_t=${Date.now()}`, { 
         method: 'GET', 
         headers: { 'Cache-Control': 'no-cache' },
         cache: 'no-store',
@@ -72,8 +72,8 @@ const QuizTake = () => {
         
         // 🌟 FIXED: Removed /api prefixes
         const initUrl = type === 'deck' 
-            ? `/api/quiz/start/deck/${idOrNum}?_t=${Date.now()}` 
-            : `/api/quiz/start/all/${idOrNum}?_t=${Date.now()}`;
+            ? `https://kishoredev.pythonanywhere.com/quiz/start/deck/${idOrNum}?_t=${Date.now()}` 
+            : `https://kishoredev.pythonanywhere.com/quiz/start/all/${idOrNum}?_t=${Date.now()}`;
 
         const initResponse = await fetch(initUrl, { 
           method: 'GET', 
@@ -127,7 +127,7 @@ const QuizTake = () => {
       formData.append('answer', selectedAnswer || '');
 
       // 🌟 FIXED: Removed /api prefix
-      const response = await fetch('/api/quiz/answer', {
+      const response = await fetch('https://kishoredev.pythonanywhere.com/quiz/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),

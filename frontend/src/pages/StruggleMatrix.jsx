@@ -20,7 +20,7 @@ const StruggleMatrix = () => {
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
-        const response = await fetch('/api/admin/struggle_matrix', { credentials: 'include' });
+        const response = await fetch('https://kishoredev.pythonanywhere.com/admin/struggle_matrix', { credentials: 'include' });
         
         if (!response.ok) {
           if (response.status === 403) throw new Error("Access Denied. Administrator privileges required.");

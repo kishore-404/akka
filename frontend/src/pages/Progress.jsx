@@ -80,7 +80,7 @@ const Progress = () => {
       try {
         setIsLoading(true);
         // Calls your Vite proxy -> routes to Flask API
-        const response = await fetch('/api/progress_data', {
+        const response = await fetch('https://kishoredev.pythonanywhere.com/progress_data', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'include' 

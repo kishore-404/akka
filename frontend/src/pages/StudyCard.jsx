@@ -28,7 +28,7 @@ const [isRetrying, setIsRetrying] = useState(false);
  const fetchCard = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/study/current_card', { credentials: 'include' });
+      const response = await fetch('https://kishoredev.pythonanywhere.com/study/current_card', { credentials: 'include' });
       const result = await response.json();
       
       if (result.status === 'completed') {
@@ -58,7 +58,7 @@ const [isRetrying, setIsRetrying] = useState(false);
         setIsLoading(true);
         
         // Tell Flask to load the specific deck and algorithm into memory
-        const response = await fetch(`/api/study/start/${deckId}/${algo || 'all'}`, {
+        const response = await fetch(`https://kishoredev.pythonanywhere.com/study/start/${deckId}/${algo || 'all'}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -91,7 +91,7 @@ const [isRetrying, setIsRetrying] = useState(false);
       // ONLY send the rating to the backend if this is the FIRST attempt.
       // This stops the backend from skipping cards when you retry.
       if (!isRetrying) {
-        await fetch(`/api/study/rate/${data.card.id}/${rating}/${rtFloat}`, {
+        await fetch(`https://kishoredev.pythonanywhere.com/study/rate/${data.card.id}/${rating}/${rtFloat}`, {
           method: 'POST',
           credentials: 'include'
         });

@@ -32,7 +32,7 @@ const ViewDeck = () => {
   const fetchDeckData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/deck_data/${id}`, { credentials: 'include' });
+      const response = await fetch(`https://kishoredev.pythonanywhere.com/deck_data/${id}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to load deck data');
       
       const data = await response.json();
@@ -61,7 +61,7 @@ const ViewDeck = () => {
       formData.append('question', newQuestion);
       formData.append('answer', newAnswer);
 
-      const response = await fetch(`/api/add_card/${id}`, {
+      const response = await fetch(`https://kishoredev.pythonanywhere.com/add_card/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
@@ -86,7 +86,7 @@ const ViewDeck = () => {
     if (!window.confirm("Are you sure you want to delete this card?")) return;
     
     try {
-      const response = await fetch(`/api/delete_card/${cardId}`, { 
+      const response = await fetch(`https://kishoredev.pythonanywhere.com/delete_card/${cardId}`, { 
         method: 'DELETE', 
         credentials: 'include' 
       });
@@ -104,7 +104,7 @@ const ViewDeck = () => {
     setCards(cards.map(c => c.id === cardId ? { ...c, is_mastered: !c.is_mastered } : c));
     
     try {
-      await fetch(`/api/toggle_mastered/${cardId}`, { 
+      await fetch(`https://kishoredev.pythonanywhere.com/toggle_mastered/${cardId}`, { 
         method: 'POST', 
         credentials: 'include' 
       });

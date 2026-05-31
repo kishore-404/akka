@@ -31,7 +31,7 @@ const MainLayout = () => {
   useEffect(() => {
     const checkUserRole = async () => {
       try {
-        const response = await fetch('/api/current_user', { credentials: 'include' });
+        const response = await fetch('https://kishoredev.pythonanywhere.com/current_user', { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setIsAdmin(data.is_admin);

@@ -21,7 +21,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchAdminData = async () => {
       try {
-        const response = await fetch('/api/admin_dashboard', { credentials: 'include' });
+        const response = await fetch('https://kishoredev.pythonanywhere.com/admin_dashboard', { credentials: 'include' });
         
         if (!response.ok) {
           if (response.status === 403) throw new Error("Access Denied. Administrator privileges required.");
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
 
   const handleExport = () => {
     // Hits the Flask backend endpoint that generates and returns the ZIP file
-    window.location.href = '/api/admin_export_all';
+    window.location.href = 'https://kishoredev.pythonanywhere.com/admin_export_all';
   };
 
   if (isLoading) {

@@ -26,7 +26,7 @@ const hasFetched = useRef(false);
 
     const fetchResults = async () => {
       try {
-        const response = await fetch('/api/quiz/results_data', { credentials: 'include' });
+        const response = await fetch('https://kishoredev.pythonanywhere.com/quiz/results_data', { credentials: 'include' });
         if (!response.ok) throw new Error('No quiz results found');
         const resultData = await response.json();
         setData(resultData);
