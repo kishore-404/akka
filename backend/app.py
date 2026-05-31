@@ -238,6 +238,11 @@ def dashboard():
         ]
     }), 200
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    # Stop Flask from looking for a 'login' endpoint to redirect to.
+    # Instead, return a clean JSON error for React.
+    return jsonify({"error": "Unauthorized. Please log in."}), 401
 # ============================================================
 # PROGRESS TRACKING ROUTE
 # ============================================================
