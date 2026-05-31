@@ -157,7 +157,7 @@ CORS(
     resources={r"/*": {"origins": [
         "http://localhost:5173",
         "https://incredible-profiterole-befc12.netlify.app",
-        "https://buela-akka.netlify.app/"
+        "https://buela-akka.netlify.app"
     ]}},
     supports_credentials=True
 )
