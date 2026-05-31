@@ -153,7 +153,10 @@ from dotenv import load_dotenv
 
 CORS(
     app,
-    resources={r"/*": {"origins": "*"}},
+    resources={r"/*": {"origins": [
+        "http://localhost:5173",
+        "https://incredible-profiterole-befc12.netlify.app"
+    ]}},
     supports_credentials=True
 )
 
