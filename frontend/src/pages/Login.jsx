@@ -5,7 +5,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight, ShieldCheck, ArrowL
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Logo from '../../public/auxlogo.jpg';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -34,7 +34,7 @@ const Login = () => {
     const password = form.password.value;
 
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ const Login = () => {
     setStatus({ type: null, message: '' });
 
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/verify_otp', {
+      const response = await fetch(`${API_BASE_URL}/verify_otp`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

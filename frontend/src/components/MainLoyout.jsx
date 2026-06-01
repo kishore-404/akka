@@ -9,6 +9,7 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import ChatWidget from './ChatWidget';
 import Logo from '../../public/auxlogo.jpg';
+import { API_BASE_URL } from "../config";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -31,7 +32,7 @@ const MainLayout = () => {
   useEffect(() => {
     const checkUserRole = async () => {
       try {
-        const response = await fetch('https://kishoredev.pythonanywhere.com/current_user', { credentials: 'include' });
+        const response = await fetch(`${API_BASE_URL}/current_user`, { credentials: 'include' });
         if (response.ok) {
           const data = await response.json();
           setIsAdmin(data.is_admin);
@@ -50,7 +51,7 @@ const MainLayout = () => {
 
   const handleLogout = async () => {
     try {
-      await fetch('/logout', { method: 'POST', credentials: 'include' });
+      await fetch(`${API_BASE_URL}/logout`, { method: 'POST', credentials: 'include' });
       navigate('/login');
     } catch (error) {
       console.error("Logout failed:", error);

@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { API_BASE_URL } from "../config";
 
 // --- Utility for Tailwind ---
 function cn(...inputs) {
@@ -180,7 +181,7 @@ const Dashboard = () => {
     try {
       setIsLoading(true);
       // Calls your Vite proxy -> routes to Flask's dashboard data endpoint
-      const response = await fetch('https://kishoredev.pythonanywhere.com/dashboard', {
+      const response = await fetch(`${API_BASE_URL}/dashboard`, {
         method: 'GET',
         credentials: 'include',
         headers: { 'Accept': 'application/json' },

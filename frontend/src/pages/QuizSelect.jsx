@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -41,7 +41,7 @@ const QuizSelect = () => {
     const fetchQuizData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('https://kishoredev.pythonanywhere.com/quiz_select_data', {
+        const response = await fetch(`${API_BASE_URL}/quiz_select_data`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'include' 

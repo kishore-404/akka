@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -78,13 +78,13 @@ const Research = () => {
       try {
         setIsLoading(true);
         // Fetch User Stats
-        const res = await fetch('https://kishoredev.pythonanywhere.com/research_data', { credentials: 'include' });
+        const res = await fetch(`${API_BASE_URL}/research_data`, { credentials: 'include' });
         if (!res.ok) throw new Error("Failed to load research data");
         const json = await res.json();
         setData(json);
 
         // Attempt to fetch Admin Stats (Will silently fail for normal users)
-        const adminRes = await fetch('https://kishoredev.pythonanywhere.com/research_statistics', { credentials: 'include' });
+        const adminRes = await fetch(`${API_BASE_URL}/research_statistics`, { credentials: 'include' });
         if (adminRes.ok) {
           const adminJson = await adminRes.json();
           setAdminData(adminJson);

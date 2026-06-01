@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, AlertCircle, ChevronRight, X, Clock } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -32,7 +32,7 @@ const QuizTake = () => {
       if (!quizData) setIsLoading(true); 
       
       // 🌟 FIXED: Removed /api prefix
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/quiz/take_data?_t=${Date.now()}`, { 
+      const response = await fetch(`${API_BASE_URL}/quiz/take_data?_t=${Date.now()}`, { 
         method: 'GET', 
         headers: { 'Cache-Control': 'no-cache' },
         cache: 'no-store',
@@ -72,8 +72,8 @@ const QuizTake = () => {
         
         // 🌟 FIXED: Removed /api prefixes
         const initUrl = type === 'deck' 
-            ? `https://kishoredev.pythonanywhere.com/quiz/start/deck/${idOrNum}?_t=${Date.now()}` 
-            : `https://kishoredev.pythonanywhere.com/quiz/start/all/${idOrNum}?_t=${Date.now()}`;
+            ? `${API_BASE_URL}/quiz/start/deck/${idOrNum}?_t=${Date.now()}` 
+            : `${API_BASE_URL}/quiz/start/all/${idOrNum}?_t=${Date.now()}`;
 
         const initResponse = await fetch(initUrl, { 
           method: 'GET', 
@@ -127,7 +127,7 @@ const QuizTake = () => {
       formData.append('answer', selectedAnswer || '');
 
       // 🌟 FIXED: Removed /api prefix
-      const response = await fetch('https://kishoredev.pythonanywhere.com/quiz/answer', {
+      const response = await fetch(`${API_BASE_URL}/quiz/answer`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),

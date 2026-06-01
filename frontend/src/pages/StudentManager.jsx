@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -26,7 +26,7 @@ const StudentManager = () => {
   const fetchStudents = async () => {
     try {
       // Re-using the admin dashboard endpoint to get the list of users
-      const response = await fetch('https://kishoredev.pythonanywhere.com/admin_dashboard', { credentials: 'include' });
+      const response = await fetch(`${API_BASE_URL}/admin_dashboard`, { credentials: 'include' });
       if (!response.ok) throw new Error("Access Denied");
       const data = await response.json();
       setStudents(data.students);
@@ -49,7 +49,7 @@ const StudentManager = () => {
     try {
       // NOTE: Your backend needs the user's ID. If the dashboard API doesn't return ID, 
       // make sure to add 'id': student.id to your api_admin_dashboard python dict!
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/admin/users/${editingUser.id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),
@@ -77,7 +77,7 @@ const StudentManager = () => {
     }
 
     try {
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/admin/users/${userId}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'DELETE',
       });
 

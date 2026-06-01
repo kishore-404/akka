@@ -3,10 +3,12 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Plus, Search, Trash2, CheckCircle2, 
-  Circle, BookOpen, AlertCircle, X, BrainCircuit 
+  Circle, BookOpen, AlertCircle, X, BrainCircuit,
+  RotateCcw
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { API_BASE_URL } from "../config";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -32,7 +34,7 @@ const ViewDeck = () => {
   const fetchDeckData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/deck_data/${id}`, { credentials: 'include' });
+      const response = await fetch(`${API_BASE_URL}/deck_data/${id}`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to load deck data');
       
       const data = await response.json();
@@ -61,7 +63,7 @@ const ViewDeck = () => {
       formData.append('question', newQuestion);
       formData.append('answer', newAnswer);
 
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/add_card/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/add_card/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
@@ -86,7 +88,7 @@ const ViewDeck = () => {
     if (!window.confirm("Are you sure you want to delete this card?")) return;
     
     try {
-      const response = await fetch(`https://kishoredev.pythonanywhere.com/delete_card/${cardId}`, { 
+      const response = await fetch(`${API_BASE_URL}/delete_card/${cardId}`, { 
         method: 'DELETE', 
         credentials: 'include' 
       });
@@ -98,13 +100,13 @@ const ViewDeck = () => {
     }
   };
 
-  // Handle Toggle Mastery
+  // Handle Toggle Mastery (Single)
   const handleToggleMastery = async (cardId) => {
     // Optimistic UI update
     setCards(cards.map(c => c.id === cardId ? { ...c, is_mastered: !c.is_mastered } : c));
     
     try {
-      await fetch(`https://kishoredev.pythonanywhere.com/toggle_mastered/${cardId}`, { 
+      await fetch(`${API_BASE_URL}/toggle_mastered/${cardId}`, { 
         method: 'POST', 
         credentials: 'include' 
       });
@@ -114,10 +116,59 @@ const ViewDeck = () => {
     }
   };
 
+  // Handle Mark All as Mastered
+  const handleMarkAllMastered = async () => {
+    const unmasteredCards = cards.filter(c => !c.is_mastered);
+    if (unmasteredCards.length === 0) return;
+
+    // Optimistic UI update
+    setCards(cards.map(c => ({ ...c, is_mastered: true })));
+
+    try {
+      await Promise.all(
+        unmasteredCards.map(card => 
+          fetch(`${API_BASE_URL}/toggle_mastered/${card.id}`, { 
+            method: 'POST', 
+            credentials: 'include' 
+          })
+        )
+      );
+    } catch (err) {
+      fetchDeckData();
+    }
+  };
+
+  // Handle Reset Progress (Redo / Unmark All)
+  const handleResetProgress = async () => {
+    if (!window.confirm("Are you sure you want to reset your mastery progress for this deck?")) return;
+
+    const masteredCards = cards.filter(c => c.is_mastered);
+    if (masteredCards.length === 0) return;
+
+    // Optimistic UI update
+    setCards(cards.map(c => ({ ...c, is_mastered: false })));
+
+    try {
+      await Promise.all(
+        masteredCards.map(card => 
+          fetch(`${API_BASE_URL}/toggle_mastered/${card.id}`, { 
+            method: 'POST', 
+            credentials: 'include' 
+          })
+        )
+      );
+    } catch (err) {
+      fetchDeckData();
+    }
+  };
+
   const filteredCards = cards.filter(c => 
     c.question.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.answer.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const hasUnmasteredCards = cards.some(c => !c.is_mastered);
+  const hasMasteredCards = cards.some(c => c.is_mastered);
 
   if (isLoading && !deck) {
     return (
@@ -176,7 +227,7 @@ const ViewDeck = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white p-4 rounded-t-2xl border border-slate-200 border-b-0 flex items-center justify-between">
+      <div className="bg-white p-4 rounded-t-2xl border border-slate-200 border-b-0 flex flex-wrap items-center justify-between gap-4">
         <div className="relative w-full max-w-md">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -186,6 +237,29 @@ const ViewDeck = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-[#111827] focus:bg-white transition-colors"
           />
+        </div>
+        
+        {/* Bulk Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          {hasUnmasteredCards && filteredCards.length > 0 && (
+            <button
+              onClick={handleMarkAllMastered}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <CheckCircle2 size={16} className="text-emerald-500" />
+              Mark All Mastered
+            </button>
+          )}
+
+          {hasMasteredCards && filteredCards.length > 0 && (
+            <button
+              onClick={handleResetProgress}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <RotateCcw size={16} className="text-slate-500" />
+              Reset Progress
+            </button>
+          )}
         </div>
       </div>
 

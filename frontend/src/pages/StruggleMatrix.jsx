@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { API_BASE_URL } from "../config";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -20,7 +21,7 @@ const StruggleMatrix = () => {
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
-        const response = await fetch('https://kishoredev.pythonanywhere.com/admin/struggle_matrix', { credentials: 'include' });
+        const response = await fetch(`${API_BASE_URL}/admin/struggle_matrix`, { credentials: 'include' });
         
         if (!response.ok) {
           if (response.status === 403) throw new Error("Access Denied. Administrator privileges required.");

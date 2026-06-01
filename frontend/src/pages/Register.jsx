@@ -5,7 +5,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import Logo from '../../public/auxlogo.jpg';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -43,7 +43,7 @@ const Register = () => {
 
     // 2. Network Request via Vite Proxy (UPDATED TO JSON)
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         credentials: 'include',
         headers: {

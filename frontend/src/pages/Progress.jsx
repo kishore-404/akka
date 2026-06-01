@@ -17,7 +17,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
-
+import { API_BASE_URL } from "../config";
 // Register Chart.js components
 ChartJS.register(
   CategoryScale, LinearScale, PointElement, LineElement, 
@@ -80,7 +80,7 @@ const Progress = () => {
       try {
         setIsLoading(true);
         // Calls your Vite proxy -> routes to Flask API
-        const response = await fetch('https://kishoredev.pythonanywhere.com/progress_data', {
+        const response = await fetch(`${API_BASE_URL}/progress_data`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'include' 

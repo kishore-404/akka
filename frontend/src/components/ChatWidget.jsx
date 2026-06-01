@@ -4,6 +4,7 @@ import { X, Send, MicOff, Loader2, Bot, Radio, VolumeX, Trash2 } from 'lucide-re
 import ReactMarkdown from 'react-markdown';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { API_BASE_URL } from "../config";
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -239,7 +240,7 @@ const ChatWidget = () => {
     setHistory(newHistory);
 
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/chat', {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

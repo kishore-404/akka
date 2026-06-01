@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Zap, Frown, CheckCircle, Flame, ArrowLeft, Trophy, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-
+import { API_BASE_URL } from "../config";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -28,7 +28,7 @@ const [isRetrying, setIsRetrying] = useState(false);
  const fetchCard = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('https://kishoredev.pythonanywhere.com/study/current_card', { credentials: 'include' });
+      const response = await fetch(`${API_BASE_URL}/study/current_card`, { credentials: 'include' });
       const result = await response.json();
       
       if (result.status === 'completed') {
@@ -58,7 +58,7 @@ const [isRetrying, setIsRetrying] = useState(false);
         setIsLoading(true);
         
         // Tell Flask to load the specific deck and algorithm into memory
-        const response = await fetch(`https://kishoredev.pythonanywhere.com/study/start/${deckId}/${algo || 'all'}`, {
+        const response = await fetch(`${API_BASE_URL}/study/start/${deckId}/${algo || 'all'}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -91,7 +91,7 @@ const [isRetrying, setIsRetrying] = useState(false);
       // ONLY send the rating to the backend if this is the FIRST attempt.
       // This stops the backend from skipping cards when you retry.
       if (!isRetrying) {
-        await fetch(`https://kishoredev.pythonanywhere.com/study/rate/${data.card.id}/${rating}/${rtFloat}`, {
+        await fetch(`${API_BASE_URL}/study/rate/${data.card.id}/${rating}/${rtFloat}`, {
           method: 'POST',
           credentials: 'include'
         });
